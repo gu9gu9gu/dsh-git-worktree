@@ -61,6 +61,12 @@ function sameStrings(left: readonly string[], right: readonly string[]): boolean
   return left.length === right.length && left.every((value, index) => value === right[index])
 }
 
+const COMMIT_MESSAGE_LIMIT = 500
+function clampCommitMessage(value: string | undefined): string {
+  if (!value) return ''
+  return value.length > COMMIT_MESSAGE_LIMIT ? value.slice(0, COMMIT_MESSAGE_LIMIT) : value
+}
+
 function preflightMessage(preflight: WorktreeApplyPreflightView, t: ClientTranslator = defaultClientTranslator): string {
   if (preflight.status === 'ready') return t("sync.preflight.passed.creating.a.reversible.local.preview")
   if (preflight.status === 'local_advanced') return t("local.advanced.but.preflight.confirmed.a.safe.merge")
@@ -92,8 +98,8 @@ export function ReviewActions({
   const [commitMode, setCommitMode] = useState<CommitMode | null>(null)
   const [checkpointOpen, setCheckpointOpen] = useState(false)
   const [discardOpen, setDiscardOpen] = useState(false)
-  const [commitMessage, setCommitMessage] = useState(review.suggestedCommitMessage)
-  const [checkpointMessage, setCheckpointMessage] = useState(review.suggestedCommitMessage)
+  const [commitMessage, setCommitMessage] = useState(clampCommitMessage(review.suggestedCommitMessage))
+  const [checkpointMessage, setCheckpointMessage] = useState(clampCommitMessage(review.suggestedCommitMessage))
   const checkpointRequestId = useRef<string | null>(null)
   const [retainEnvironment, setRetainEnvironment] = useState(false)
   const [retention, setRetention] = useState<Exclude<WorktreeRetentionMode, 'cleanup'>>('retain_24h')
@@ -148,8 +154,8 @@ export function ReviewActions({
   }, [adapter, services, identity?.sessionId])
 
   useEffect(() => {
-    setCommitMessage(review.suggestedCommitMessage)
-    setCheckpointMessage(review.suggestedCommitMessage)
+    setCommitMessage(clampCommitMessage(review.suggestedCommitMessage))
+    setCheckpointMessage(clampCommitMessage(review.suggestedCommitMessage))
     setCheckpointOpen(false)
     if (moreMenuRef.current) moreMenuRef.current.open = false
     checkpointRequestId.current = null
@@ -477,7 +483,7 @@ export function ReviewActions({
   const openCheckpoint = (): void => {
     if (!target?.checkpointGeneration || !target.capabilities.checkpoint || disabled || submitting !== null) return
     checkpointRequestId.current = checkpointRequestIdForGeneration(target.checkpointGeneration)
-    setCheckpointMessage(review.suggestedCommitMessage)
+    setCheckpointMessage(clampCommitMessage(review.suggestedCommitMessage))
     setCheckpointOpen(true)
   }
 
